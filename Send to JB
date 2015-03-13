@@ -1,0 +1,109 @@
+'Specific code to shortcut forwarding a mail to my father in law
+
+'Main Sub linke the shortcut button on the ribbon
+Sub Send_to_JB()
+  Dim objMail As Outlook.MailItem
+  Dim CurrBody, Header As Variant
+  Set ObjItem = GetCurrentItem()
+    
+    
+  'Runs the sub to download the PDF from the hyperlink in the mail to be forwarded
+  DownloadPDF
+    
+  'Pulls information from the mail to be forwarded
+  CurrBody = ObjItem.HTMLBody
+  Header = "<p style=font-size:10pt;font-family:Tahoma><b>From: </b>" & ObjItem.SenderName & "<br> <b>Sent: </b>" & ObjItem.SentOn & "<br> <b>To: </b>" & ObjItem.To & "<br><b> Subject: </b>" & ObjItem.Subject & "</p>"
+  
+  'Creates and completes forwarded mail  
+  Set objMail = ObjItem.Forward 
+  objMail.To = "john.beck@mineraltech.co.za"
+  objMail.HTMLBody = "<p style=font-size:11pt;font-family:calibri>Hi John - <br><br>Please see this week's SACR attached.<br><br>Best regards - <br><br>Mike<br><hr><br></p>" & Header & "<br>" & CurrBody
+  objMail.BodyFormat = olFormatHTML
+  objMail.Display
+  'Attaches downloaded file
+  Call AttachFiles("C:\Users\mxx\Downloads\", "*.pdf")
+  'objMail.Send
+  Set ObjItem = Nothing
+  Set objMail = Nothing
+End Sub
+
+'Sub to fetch and follow specific hyperlinks to pdf in mail
+Sub Hyperlink(itm As MailItem)
+
+Dim oDoc As Object
+Dim h As Variant
+
+If itm.GetInspector.EditorType = olEditorWord Then
+
+    Set oDoc = itm.GetInspector.WordEditor
+
+    For Each h In oDoc.Hyperlinks
+        Debug.Print h.Name
+        If Right(h.Name, 4) = ".pdf" Then
+            h.Follow
+        End If
+    Next
+
+End If
+
+Set oDoc = Nothing
+
+End Sub
+
+'Sub to run hyperlink on current mail item [to be combined with main sub] 
+Sub DownloadPDF()
+Dim currItem As MailItem
+Set currItem = GetCurrentItem
+Hyperlink currItem
+End Sub
+
+'Function to access Outlook mail items for use in Subs
+Function GetCurrentItem() As Object
+    Dim objApp As Outlook.Application
+    Set objApp = Application
+    On Error Resume Next
+    Select Case TypeName(objApp.ActiveWindow)
+        Case "Explorer"
+        Set GetCurrentItem = _
+        objApp.ActiveExplorer.Selection.Item(1)
+        Case "Inspector"
+        Set GetCurrentItem = _
+        objApp.ActiveInspector.CurrentItem
+        Case Else
+    End Select
+End Function
+
+'Sub to attach specific files to e-mail in main sub
+Sub AttachFiles(strFolder As String, Optional FileType As String = "*.*")
+ 
+' check if folder exists
+If Dir(strFolder, vbDirectory) = "" Then
+  GoTo ExitProc
+End If
+ 
+' check if folder contains specified items
+Dim strFileN As String
+strFileN = Dir(strFolder & FileType)
+If Len(strFileN) = 0 Then
+  GoTo ExitProc
+End If
+ 
+'reference mail item
+Dim objMail As Outlook.MailItem
+Dim olAttach As Outlook.Attachments
+Set objMail = GetCurrentItem()
+Set olAttach = objMail.Attachments
+ 
+' loop through folder and add attachments, copy attachment to storage folder and delete the downloaded file
+Do While Len(strFileN) > 0
+    If Left(strFileN, 4) = "SACR" Then
+        olAttach.Add strFolder & strFileN
+        FileCopy "C:\Users\mxx\Downloads\" & strFileN, "H:\Share\_Technical\Research\Mining\SA Coal Report\" & strFileN
+        Kill "C:\Users\mxx\Downloads\" & strFileN
+    End If
+    strFileN = Dir
+Loop
+ 
+ExitProc:
+Set olApp = Nothing
+End Sub
