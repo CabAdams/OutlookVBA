@@ -1,0 +1,33 @@
+'Macro to forward mails that have been incorrectly sent to me rather than my namesake at FNB
+
+Sub Forward_to_FNB_MAdams()
+    Dim objMail As Outlook.MailItem
+    Dim Sender, RecList, CCList, CurrBody, Header, CCOutput As Variant
+    Set ObjItem = GetCurrentItem()
+    Set objMail = ObjItem.Forward
+    
+    'Pull details of mail to be forwarded
+    Sender = ObjItem.SenderEmailAddress
+    RecList = Replace(ObjItem.To, "Adams, Michael", "")
+    CCList = Replace(ObjItem.CC, "Adams, Michael", "")
+    CurrBody = ObjItem.HTMLBody
+    
+    'Checks if message to be sent only to sender or all recipients
+    If MsgBox("Do you want to include all recipients", vbYesNo, "Recipient Check") = vbYes Then
+        CCOutput = Sender & ";" & RecList & ";" & CCList
+    Else:
+        CCOutput = Sender
+    End If
+    
+    'Completes details in mail being forwarded
+    Header = "<p style=font-size:10pt;font-family:Tahoma><b>From: </b>" & ObjItem.SenderName & "<br> <b>Sent: </b>" & ObjItem.SentOn & "<br> <b>To: </b>" & ObjItem.To & "<br><b> Subject: </b>" & ObjItem.Subject & "</p>"
+    objMail.To = "AdamsM@fnb.co.za"
+    objMail.CC = CCOutput
+    objMail.HTMLBody = "<p>Forwarding to correct Mike Adams.<br><hr><br></p>" & Header & "<br>" & CurrBody
+    objMail.BodyFormat = olFormatHTML
+    objMail.Display
+    'objMail.Send
+    
+    Set ObjItem = Nothing
+    Set objMail = Nothing
+End Sub
