@@ -1,0 +1,12 @@
+'Simple code to create a shortcut to forward any e-mails from my work Inbox to my personal e-mail account
+
+Sub Send_to_Me()
+    Dim objMail As Outlook.MailItem
+    Set ObjItem = GetCurrentItem()
+    Set objMail = ObjItem.Forward
+    objMail.To = "michaelbarryadams@gmail.com"
+    objMail.Display
+    objMail.Send
+    Set ObjItem = Nothing
+    Set objMail = Nothing
+End Sub
